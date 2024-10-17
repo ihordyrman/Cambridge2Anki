@@ -1,4 +1,18 @@
-.idea
+# JetBrains Rider
+.idea/
+*.sln.iml
+
+### DotnetCore ###
+# .NET Core build folders
 bin/
 obj/
 
+### fsharp ###
+lib/debug
+lib/release
+Debug
+obj
+bin
+/build/
+*.exe
+!.paket/paket.bootstrapper.exe
