@@ -1,0 +1,7 @@
+﻿<Solution>
+  <Folder Name="/items/">
+    <File Path=".gitignore" />
+    <File Path="README.md" />
+  </Folder>
+  <Project Path="src\Cambridge2Anki.fsproj" Type="Classic F#" />
+</Solution>

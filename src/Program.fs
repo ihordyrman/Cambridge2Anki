@@ -1,12 +1,7 @@
-﻿#r "nuget: FSharp.Data"
-
+﻿open System.IO
 open FSharp.Data
 
-// todo: read words from file, instead of hardcoding
-[<Literal>]
-let wordToFind = "eloquent"
-
-let words = [ wordToFind ]
+let words = File.ReadAllLinesAsync("words.txt") |> Async.AwaitTask |> Async.RunSynchronously
 
 let thesaurus word = $"https://www.thesaurus.com/browse/{word}"
 let cambridge word = $"https://dictionary.cambridge.org/dictionary/english/{word}"
@@ -23,6 +18,11 @@ type Word =
       definition: string
       examples: string list
       synonyms: string list }
+
+
+// let resposnse = HtmlDocument.Load(thesaurus "eloquent")
+// printfn $"{resposnse}"
+// todo: bypass anti-scraping measures
 
 let results =
     words
@@ -61,17 +61,11 @@ let results =
                 | Some x -> x |> Seq.tryHead |> Option.map (fun span -> span.InnerText()) |> Option.defaultValue ""
 
 
-        // todo: process the rest of properties
-
-
         printfn $"%s{definition}"
         printfn $"{partOfSpeech}"
         printfn $"%s{phonetic}"
 
         x.InnerText())
-    |> Seq.toList
-
+    |> Seq.toArray
 
 printfn $"%i{results.Length}"
-
-// todo: export to anki format txt file
