@@ -1,10 +1,15 @@
-﻿open System.IO
+﻿open System
+open System.IO
+open System.Text
+open System.Threading.Tasks
 open AngleSharp
 open AngleSharp.Dom
 
-let words = File.ReadAllLinesAsync("words.txt") |> Async.AwaitTask |> Async.RunSynchronously
+[<Literal>]
+let deck = "English::Vocabulary"
 
 let cambridge word = $"https://dictionary.cambridge.org/dictionary/english/{word}"
+let words = File.ReadAllLinesAsync("words.txt") |> Async.AwaitTask |> Async.RunSynchronously
 
 type PartOfSpeech =
     | Noun
@@ -15,12 +20,18 @@ type PartOfSpeech =
 
 type Word =
     { word: string
+      cloze: string
       partOfSpeech: PartOfSpeech
       phonetic: string
       definition: string
       image: string option
       examples: string array
       synonyms: string array }
+
+let sb = StringBuilder()
+sb.Append("#separator:tab" + Environment.NewLine) |> ignore
+sb.Append("#html:false" + Environment.NewLine) |> ignore
+sb.Append("#deck column:1" + Environment.NewLine) |> ignore
 
 let results =
     words
@@ -29,6 +40,13 @@ let results =
             BrowsingContext.New(Configuration.Default.WithDefaultLoader()).OpenAsync(cambridge word)
             |> Async.AwaitTask
             |> Async.RunSynchronously
+
+        let cloze =
+            match word.Length with
+            | 0 -> "_"
+            | x when x < 4 -> "_" + word.Substring(1)
+            | 4 -> word.Substring(0, 1) + "__"
+            | _ -> word.Substring(0, 1) + "__" + word.Substring(word.Length - 2)
 
         let result = document.GetElementsByClassName("di-body") |> Seq.head
 
@@ -66,7 +84,6 @@ let results =
             |> Seq.map (fun x -> x.TextContent.Trim())
             |> Seq.toArray
 
-
         let synonym =
             result.GetElementsByClassName "x-h dx-h"
             |> Seq.tryHead
@@ -78,13 +95,28 @@ let results =
             |> Seq.tryHead
             |> Option.map (fun x -> "https://dictionary.cambridge.org/" + x.GetAttribute("src"))
 
+        // after many requests, the website starts to block the requests
+        async { return! Task.Delay 1000 |> Async.AwaitTask } |> Async.RunSynchronously
+
         { definition = definition
+          cloze = cloze
           partOfSpeech = partOfSpeech
           phonetic = phonetic
           examples = examples
           synonyms = [| synonym |]
           word = word
           image = image })
+    |> Array.iter (fun word ->
+        sb.Append(deck + "\t") |> ignore
+        sb.Append(word.word + "\t") |> ignore
+        sb.Append(word.cloze + "\t") |> ignore
+        sb.Append(word.phonetic + "\t") |> ignore
+        sb.Append("[replace-me]\t") |> ignore // audio will be taken from anki app via azure api
+        sb.Append(word.definition + "\t") |> ignore
+        sb.Append(word.definition + "\t") |> ignore
+        sb.Append((word.examples |> String.concat ", ") + "\t") |> ignore
+        sb.Append((word.image |> (Option.defaultValue "[replace-me]")) + "\t") |> ignore
+        sb.Append((word.synonyms |> String.concat ", ") + "\t") |> ignore
+        sb.Append("\n") |> ignore)
 
-for result in results do
-    printfn $"%A{result}"
+File.WriteAllText($"anki-{DateTime.Now.ToShortDateString()}.txt", sb.ToString())
