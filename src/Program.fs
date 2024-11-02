@@ -45,16 +45,16 @@ let results =
             match word.Length with
             | 0 -> "_"
             | x when x < 4 -> "_" + word.Substring(1)
-            | 4 -> word.Substring(0, 1) + "__"
-            | _ -> word.Substring(0, 1) + "__" + word.Substring(word.Length - 2)
+            | x when x < 6 -> word.Substring(0, 1) + "__" + word.Substring(word.Length - 1)
+            | _ -> word.Substring(0, 2) + "__" + word.Substring(word.Length - 2)
 
         let result = document.GetElementsByClassName("di-body") |> Seq.head
 
         let definition =
-            result.GetElementsByClassName "ddef_h"
+            result.GetElementsByClassName "def ddef_d db"
             |> Seq.tryHead
             |> Option.map (fun div -> div.TextContent |> fun def -> def.Replace(":", "").Trim())
-            |> Option.defaultValue ""
+            |> Option.defaultValue "[replace-me]"
 
         let partOfSpeech =
             result.GetElementsByClassName "pos dpos"
@@ -76,7 +76,7 @@ let results =
             |> Option.map (fun (x: IElement) -> x.GetElementsByClassName "pron dpron")
             |> fun x ->
                 match x with
-                | None -> ""
+                | None -> "[replace-me]"
                 | Some x -> x |> Seq.tryHead |> Option.map (fun span -> span.TextContent) |> Option.defaultValue ""
 
         let examples =
@@ -88,14 +88,14 @@ let results =
             result.GetElementsByClassName "x-h dx-h"
             |> Seq.tryHead
             |> Option.map (fun x -> x.TextContent)
-            |> Option.defaultValue ""
+            |> Option.defaultValue "[replace-me]"
 
         let image =
             result.GetElementsByTagName "amp-img"
             |> Seq.tryHead
             |> Option.map (fun x -> "https://dictionary.cambridge.org/" + x.GetAttribute("src"))
 
-        // after many requests, the website starts to block the requests
+        // after receiving numerous requests, the website has begun to block further attempts, so we need to slow down
         async { return! Task.Delay 1000 |> Async.AwaitTask } |> Async.RunSynchronously
 
         { definition = definition
@@ -112,7 +112,6 @@ let results =
         sb.Append(word.cloze + "\t") |> ignore
         sb.Append(word.phonetic + "\t") |> ignore
         sb.Append("[replace-me]\t") |> ignore // audio will be taken from anki app via azure api
-        sb.Append(word.definition + "\t") |> ignore
         sb.Append(word.definition + "\t") |> ignore
         sb.Append((word.examples |> String.concat ", ") + "\t") |> ignore
         sb.Append((word.image |> (Option.defaultValue "[replace-me]")) + "\t") |> ignore
