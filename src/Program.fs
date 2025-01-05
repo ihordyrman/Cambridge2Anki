@@ -17,6 +17,8 @@ type PartOfSpeech =
     | Adjective
     | Adverb
     | PhrasalVerb
+    | Preposition
+    | Phrase
 
 type Word =
     { word: string
@@ -68,6 +70,8 @@ let results =
                 | Some "adjective" -> PartOfSpeech.Adjective
                 | Some "adverb" -> PartOfSpeech.Adverb
                 | Some "phrasal verb" -> PartOfSpeech.PhrasalVerb
+                | Some "preposition" -> PartOfSpeech.Preposition
+                | Some "phrase" -> PartOfSpeech.Phrase
                 | _ -> failwith "Unknown part of speech"
 
         let phonetic =
