@@ -11,19 +11,9 @@ let deck = "English::Vocabulary"
 let cambridge word = $"https://dictionary.cambridge.org/dictionary/english/{word}"
 let words = File.ReadAllLinesAsync("words.txt") |> Async.AwaitTask |> Async.RunSynchronously
 
-type PartOfSpeech =
-    | Noun
-    | Verb
-    | Adjective
-    | Adverb
-    | PhrasalVerb
-    | Preposition
-    | Phrase
-
 type Word =
     { word: string
       cloze: string
-      partOfSpeech: PartOfSpeech
       phonetic: string
       definition: string
       image: string option
@@ -58,22 +48,6 @@ let results =
             |> Option.map (fun div -> div.TextContent |> fun def -> def.Replace(":", "").Trim())
             |> Option.defaultValue "[replace-me]"
 
-        let partOfSpeech =
-            result.GetElementsByClassName "pos dpos"
-            |> Seq.tryHead
-            |> Option.map (fun span -> span.TextContent)
-            |> fun span ->
-                match span with
-                | None -> failwith "Part of speech not found"
-                | Some "noun" -> PartOfSpeech.Noun
-                | Some "verb" -> PartOfSpeech.Verb
-                | Some "adjective" -> PartOfSpeech.Adjective
-                | Some "adverb" -> PartOfSpeech.Adverb
-                | Some "phrasal verb" -> PartOfSpeech.PhrasalVerb
-                | Some "preposition" -> PartOfSpeech.Preposition
-                | Some "phrase" -> PartOfSpeech.Phrase
-                | _ -> failwith "Unknown part of speech"
-
         let phonetic =
             result.GetElementsByClassName "uk dpron-i "
             |> Seq.tryHead
@@ -104,7 +78,6 @@ let results =
 
         { definition = definition
           cloze = cloze
-          partOfSpeech = partOfSpeech
           phonetic = phonetic
           examples = examples
           synonyms = [| synonym |]
