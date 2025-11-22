@@ -95,4 +95,5 @@ let results =
         sb.Append((word.synonyms |> String.concat ", ") + "\t") |> ignore
         sb.Append("\n") |> ignore)
 
-File.WriteAllText($"anki-{DateTime.Now.ToShortDateString()}.txt", sb.ToString())
+let now = DateTime.Now.ToString("ddMMyyyy-HHmmss")
+File.WriteAllText($"anki-{now}.txt", sb.ToString())
